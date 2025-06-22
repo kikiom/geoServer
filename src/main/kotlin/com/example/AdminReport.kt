@@ -6,6 +6,7 @@ import jakarta.inject.Inject
 import jakarta.persistence.EntityManager
 import jakarta.ws.rs.*
 import jakarta.ws.rs.core.*
+import java.sql.Timestamp
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
@@ -34,8 +35,20 @@ class AdminAuditResource {
         // Изграждане на заявка според филтър...
         val query = buildAuditQuery(start, end, filter)
 
-        val results = entityManager.createNativeQuery(query).resultList
-        return Response.ok(results).build()
+        val rawResults = entityManager.createNativeQuery(query).resultList
+
+        val mappedResults = rawResults.map {
+            val row = it as Array<*>
+            AuditLogEntry(
+                username = row[0] as String,
+                ip_address = row[1] as String,
+                event_time = (row[2] as Timestamp).toLocalDateTime(),
+                data_type = row[3] as String,
+                details = row[4] as String
+            )
+        }
+
+        return Response.ok(mappedResults).build()
     }
 
     fun buildAuditQuery(start: LocalDate, end: LocalDate, filter: String?): String {

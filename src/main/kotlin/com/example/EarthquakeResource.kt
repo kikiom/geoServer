@@ -4,6 +4,7 @@ package com.example
 import io.vertx.core.http.HttpServerRequest
 import jakarta.inject.Inject
 import jakarta.persistence.EntityManager
+import jakarta.transaction.Transactional
 import jakarta.ws.rs.*
 import jakarta.ws.rs.core.*
 import java.sql.Types.NULL
@@ -17,10 +18,11 @@ class EarthquakeResource @Inject constructor(
     @Inject
     lateinit var request: HttpServerRequest
 
-    lateinit var logger: Logger
+     var logger = Logger()
 
     @GET
     @Path("/nearby")
+    @Transactional
     fun getEarthquakesAtLocation(
         @QueryParam("lat") lat: Double?,
         @QueryParam("lon") lon: Double?,
@@ -31,7 +33,7 @@ class EarthquakeResource @Inject constructor(
         }
 
         val username = request.getHeader("X-Remote-User")?: "unknown"
-        logger.logAudit(username, "earthquakes", "Getting earthquakes at $lat, $lon");
+        logger.logAudit(entityManager,request,username, "earthquakes", "Getting earthquakes at $lat, $lon");
 
 
         val query = """

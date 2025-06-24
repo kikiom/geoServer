@@ -3,28 +3,24 @@ package com.example
 import jakarta.inject.Inject
 import jakarta.persistence.EntityManager
 import io.vertx.core.http.HttpServerRequest
+import jakarta.transaction.Transactional
 import java.time.Instant
 
 class Logger {
 
-    @Inject
-    lateinit var entityManager: EntityManager
-
-    @Inject
-    lateinit var request: HttpServerRequest
-
-    fun logAudit(username: String, eventType: String, details: String) {
+    @Transactional
+    fun logAudit( entityManager:EntityManager,request: HttpServerRequest, username: String, eventType: String, details: String) {
         val entry = AuditLog(
             username = username,
-            ipAddress = getClientIp(),
-            eventType = eventType,
-            eventTime = Instant.now(),
+            ip_address = getClientIp(request),
+            event_type = eventType,
+            event_time = Instant.now(),
             details = details
         )
         entityManager.persist(entry)
     }
 
-    fun getClientIp(): String {
+    fun getClientIp(request: HttpServerRequest): String {
         return request.getHeader("X-Forwarded-For")
             ?: request.remoteAddress().host()
     }

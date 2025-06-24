@@ -1,6 +1,7 @@
 package com.example
 
 import jakarta.persistence.*
+import java.math.BigInteger
 import java.time.Instant
 import java.time.LocalDateTime
 
@@ -16,13 +17,15 @@ data class AuditLogEntry(
 @Table(name = "audit_logs")
 data class AuditLog(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0,
+    val id: Int = 0,
 
     val username: String,
-    val ipAddress: String,
-    val eventType: String,
-    val eventTime: Instant,
+    val ip_address: String,
+    val event_type: String,
+    val event_time: Instant,
 
     @Column(columnDefinition = "TEXT")
     val details: String
-)
+){
+    constructor() : this(0, "", "", "", Instant.now(), "") // No-arg constructor
+}

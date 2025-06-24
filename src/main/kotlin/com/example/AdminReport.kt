@@ -10,6 +10,7 @@ import java.sql.Timestamp
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import io.vertx.core.http.HttpServerRequest
+import jakarta.transaction.Transactional
 
 
 @Path("/api/admin")
@@ -24,11 +25,12 @@ class AdminAuditResource {
     @Inject
     lateinit var request: HttpServerRequest
 
-    lateinit var logger: Logger
+     var logger = Logger()
 
     @GET
     @Path("/admin/audit-report")
     @RolesAllowed("ADMIN")
+    @Transactional
     fun getAuditReport(
         @QueryParam("start") start: LocalDate,
         @QueryParam("end") end: LocalDate,
@@ -40,7 +42,7 @@ class AdminAuditResource {
         }
 
         val username = request.getHeader("X-Remote-User")?: "unknown"
-        logger.logAudit(username, "audit-report", "Requested audit logs from $start to $end, filter: $filter")
+        logger.logAudit(entityManager,request,username, "audit-report", "Requested audit logs from $start to $end, filter: $filter")
 
         // Изграждане на заявка според филтър...
         val query = buildAuditQuery(start, end, filter)

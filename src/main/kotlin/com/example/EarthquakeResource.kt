@@ -1,17 +1,23 @@
 package com.example
 
 
+import io.vertx.core.http.HttpServerRequest
 import jakarta.inject.Inject
 import jakarta.persistence.EntityManager
 import jakarta.ws.rs.*
 import jakarta.ws.rs.core.*
+import java.sql.Types.NULL
 
 @Path("/api/earthquakes")
-@Produces(MediaType.MEDIA_TYPE_WILDCARD)
+@Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 class EarthquakeResource @Inject constructor(
     val entityManager: EntityManager
 ) {
+    @Inject
+    lateinit var request: HttpServerRequest
+
+    lateinit var logger: Logger
 
     @GET
     @Path("/nearby")
@@ -19,12 +25,14 @@ class EarthquakeResource @Inject constructor(
         @QueryParam("lat") lat: Double?,
         @QueryParam("lon") lon: Double?,
         @QueryParam("radius_km") radiusKm: Double? = 50.0
-    ): Response {
+    ): Any {
         if (lat == null || lon == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                .entity("Missing query parameters 'lat' or 'lon'")
-                .build()
+            return NULL;
         }
+
+        val username = request.getHeader("X-Remote-User")?: "unknown"
+        logger.logAudit(username, "earthquakes", "Getting earthquakes at $lat, $lon");
+
 
         val query = """
             SELECT id, magnitude, place, event_time, longitude, latitude
@@ -64,8 +72,8 @@ class EarthquakeResource @Inject constructor(
 
         val geoJson = EarthquakeFeatureCollection(features = features)
 
-        return Response.ok(geoJson).build()
-//        return geoJson
+//        return Response.ok(geoJson).build()
+        return geoJson
 //        return EarthquakeFeatureCollection(features = features)
     }
 }

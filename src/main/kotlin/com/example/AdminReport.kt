@@ -9,6 +9,8 @@ import jakarta.ws.rs.core.*
 import java.sql.Timestamp
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
+import io.vertx.core.http.HttpServerRequest
+
 
 @Path("/api/admin")
 @Produces(MediaType.APPLICATION_JSON)
@@ -18,6 +20,11 @@ class AdminAuditResource {
 
     @Inject
     lateinit var entityManager: EntityManager
+
+    @Inject
+    lateinit var request: HttpServerRequest
+
+    lateinit var logger: Logger
 
     @GET
     @Path("/admin/audit-report")
@@ -31,6 +38,9 @@ class AdminAuditResource {
         if (ChronoUnit.MONTHS.between(start, end) > 3) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Максималният период е 3 месеца").build()
         }
+
+        val username = request.getHeader("X-Remote-User")?: "unknown"
+        logger.logAudit(username, "audit-report", "Requested audit logs from $start to $end, filter: $filter")
 
         // Изграждане на заявка според филтър...
         val query = buildAuditQuery(start, end, filter)
